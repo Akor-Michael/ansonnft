@@ -13,7 +13,7 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-dotenv.config({ path: "./.env" });
+require('dotenv').config();
 const app = require("./app");
 // const Email = require("./utils/email");
 
