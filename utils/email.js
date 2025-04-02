@@ -28,12 +28,12 @@ module.exports = class Email {
   newTransport() {
     return nodemailer.createTransport({
       host: "smtp.hostinger.com",
-      // port: 465,
-      port: 587,
+      port: 465,
+      // port: 587,
       secure: true, // Set to true if using a secure connection (e.g., SSL/TLS)
       auth: {
-        user: process.env.AUTH_USER,
-        pass: process.env.AUTH_PASS,
+        user: "no-reply@thenftmarketplace.store",
+        pass: "9802Anson@!!",
       },
     });
   }
