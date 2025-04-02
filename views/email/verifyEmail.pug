@@ -1,0 +1,64 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    title Get Started with Your Account
+    style.
+      body {
+        font-family: Verdana, sans-serif;
+        color: #222;
+        background: #e9ecef;
+        padding: 25px;
+        margin: 0;
+      }
+      .container {
+        max-width: 650px;
+        margin: auto;
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+      }
+      h1 {
+        color: #2e86c1;
+        margin: 0;
+      }
+      p {
+        font-size: 17px;
+        line-height: 1.6;
+      }
+      .button {
+        background: #28a745;
+        color: #fff;
+        padding: 15px 30px;
+        text-decoration: none;
+        font-size: 17px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-top: 25px;
+      }
+      .info {
+        margin-top: 35px;
+        font-size: 15px;
+        color: #777;
+        text-align: center;
+      }
+      .info a {
+        color: #007bff;
+        text-decoration: none;
+      }
+  body
+    .container
+      h1 Welcome to #{domainName}!
+      p Hey #{username},
+      p We're thrilled to have you on board. To make the most of your experience, please confirm your email address.
+      p Just click the button below to finish setting up your account:
+      a.button(href=`${url}`, target='_blank') Confirm Your Email
+      p If you didn't request this, you can safely ignore it—no action is needed.
+      .info
+        p #{domainName} Team, 410 Sunset Drive, Austin TX 73301
+        p &copy; 2025 #{domainName}. All Rights Reserved
+        br
+        a(href='mailto:support@#{domainName}.com') Need Help?
+
