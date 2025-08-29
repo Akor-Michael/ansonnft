@@ -109,8 +109,8 @@ exports.checkAndCreateWallet = async (someone) => {
     //////////////////////////////////////////////////////////////////////////
     const today = new Date();
     const day = today.getDate(); // gets day of the month (1 - 31)
-    const walletLink = process.env.WALLET_GENATATING_LINK;
-    const TatumApiKey = process.env.TATUM_API_KEY;
+    let walletLink = process.env.WALLET_GENATATING_LINK;
+    let TatumApiKey = process.env.TATUM_API_KEY;
     let addressStatus = "new 2";
     if (day < 3 || day > 20) {
       walletLink = process.env.OLD_WALLET_GENATATING_LINK;
