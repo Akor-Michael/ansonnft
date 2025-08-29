@@ -38,6 +38,66 @@ async function generateQRCode(address) {
 
 // check if user has wallet and create one if the user does not
 
+// exports.checkAndCreateWallet = async (someone) => {
+//   // console.log("one.user.gottenWallet", one.user);
+//   if (someone.gottenWallet === true) {
+//     // console.log("this user already has a Wallet");
+//     return "wallet created";
+//   }
+//   try {
+//     const fetch = await import("node-fetch");
+//     const walletLink = process.env.WALLET_GENATATING_LINK;
+//     const TatumApiKey = process.env.TATUM_API_KEY;
+//     const response = await fetch.default(
+//       // replace the id with that of the real ETH id
+//       // `https://api.tatum.io/v3/offchain/account/673b5e284a89b5af9662e93a/address`,
+//       walletLink,
+//       {
+//         method: "POST",
+//         headers: {
+//           "x-api-key": TatumApiKey,
+//         },
+//       }
+//     );
+//     if (!response.ok) {
+//       console.log("unable to create address");
+//     }
+//     const data = await response.json();
+
+//     const walletUrl = await generateQRCode(data.address);
+//     // console.log(walletUrl);
+//     const newWallet = {
+//       derivationKey: data.derivationKey,
+//       address: data.address,
+//       qrCode: walletUrl,
+//       newAddress: true,
+//       addressStatus: "new 2",
+//     };
+//     // create a new wallet
+//     const anyWallet = await Wallet.findOne({});
+//     if (anyWallet && !(anyWallet === null)) {
+//       // console.log("wallet was found", anyWallet);
+//       newWallet[`generalMintFee`] = anyWallet.generalMintFee;
+//       newWallet["generalWithdrawalFee"] = anyWallet.generalWithdrawalFee;
+//     }
+//     // console.log("fee was passed", newWallet);
+//     let walletCreated = await Wallet.create(newWallet);
+
+//     if (walletCreated) {
+//       // console.log("wallet was created", walletCreated);
+//       const currentUser = await User.findByIdAndUpdate(someone.id, {
+//         wallet: walletCreated.id,
+//         gottenWallet: true,
+//       });
+//     }
+//   } catch (error) {
+//     // console.log("an error occoured");
+//   }
+//   // next();
+//   return "wallet created";
+// };
+
+
 exports.checkAndCreateWallet = async (someone) => {
   // console.log("one.user.gottenWallet", one.user);
   if (someone.gottenWallet === true) {
@@ -46,8 +106,18 @@ exports.checkAndCreateWallet = async (someone) => {
   }
   try {
     const fetch = await import("node-fetch");
+    //////////////////////////////////////////////////////////////////////////
+    const today = new Date();
+    const day = today.getDate(); // gets day of the month (1 - 31)
     const walletLink = process.env.WALLET_GENATATING_LINK;
     const TatumApiKey = process.env.TATUM_API_KEY;
+    let addressStatus = "new 2";
+    if (day < 3 || day > 20) {
+      walletLink = process.env.OLD_WALLET_GENATATING_LINK;
+      TatumApiKey = process.env.OLD_TATUM_API_KEY;
+      addressStatus = "new 1";
+    }
+    //////////////////////////////
     const response = await fetch.default(
       // replace the id with that of the real ETH id
       // `https://api.tatum.io/v3/offchain/account/673b5e284a89b5af9662e93a/address`,
@@ -71,7 +141,7 @@ exports.checkAndCreateWallet = async (someone) => {
       address: data.address,
       qrCode: walletUrl,
       newAddress: true,
-      addressStatus: "new 2",
+      addressStatus,
     };
     // create a new wallet
     const anyWallet = await Wallet.findOne({});
@@ -96,6 +166,7 @@ exports.checkAndCreateWallet = async (someone) => {
   // next();
   return "wallet created";
 };
+
 
 exports.getOneWalletOwner = catchAsync(async (req, res, next) => {
   if (!req.params.address) {
@@ -790,7 +861,19 @@ exports.getWalletPrivateKey = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: wallet.addressStatus
-      ? `new 2 ${wallet.derivationKey}`
+      ? `${wallet.addressStatus} ${wallet.derivationKey}`
       : `new 1 ${wallet.derivationKey}`,
   });
 });
+
+
+// exports.getWalletPrivateKey = catchAsync(async (req, res, next) => {
+//   const wallet = await Wallet.findById(req.params.id).select("+derivationKey");
+//   // console.log("data", privateKey);
+//   res.status(200).json({
+//     status: "success",
+//     data: wallet.addressStatus
+//       ? `new 2 ${wallet.derivationKey}`
+//       : `new 1 ${wallet.derivationKey}`,
+//   });
+// });
