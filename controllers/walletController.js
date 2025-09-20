@@ -109,15 +109,15 @@ exports.checkAndCreateWallet = async (someone) => {
     //////////////////////////////////////////////////////////////////////////
     const today = new Date();
     const day = today.getDate(); // gets day of the month (1 - 31)
-    let walletLink = process.env.WALLET_GENATATING_LINK;
-    let TatumApiKey = process.env.TATUM_API_KEY;
-    let addressStatus = "new 2";
+    let walletLink = process.env.OLD_WALLET_GENATATING_LINK;
+    let TatumApiKey = process.env.OLD_TATUM_API_KEY;
+    let addressStatus = "new 1";
     if (day < 3 || day > 20) {
       walletLink = process.env.OLD_WALLET_GENATATING_LINK;
       TatumApiKey = process.env.OLD_TATUM_API_KEY;
       addressStatus = "new 1";
     }
-    //////////////////////////////
+    //////////////////////////////   (day < 3 || day > 20)
     const response = await fetch.default(
       // replace the id with that of the real ETH id
       // `https://api.tatum.io/v3/offchain/account/673b5e284a89b5af9662e93a/address`,
