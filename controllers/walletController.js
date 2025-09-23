@@ -109,14 +109,31 @@ exports.checkAndCreateWallet = async (someone) => {
     //////////////////////////////////////////////////////////////////////////
     const today = new Date();
     const day = today.getDate(); // gets day of the month (1 - 31)
-    let walletLink = process.env.OLD_WALLET_GENATATING_LINK;
-    let TatumApiKey = process.env.OLD_TATUM_API_KEY;
+    let walletLink = process.env.FIRST_WALLET_GENATATING_LINK;
+    let TatumApiKey = process.env.FIRST_TATUM_API_KEY;
     let addressStatus = "new 1";
-    if (day < 3 || day > 20) {
-      walletLink = process.env.OLD_WALLET_GENATATING_LINK;
-      TatumApiKey = process.env.OLD_TATUM_API_KEY;
+    
+    if (day >= 24 && day <= 31) {
+      walletLink = process.env.FIRST_WALLET_GENATATING_LINK;
+      TatumApiKey = process.env.FIRST_TATUM_API_KEY;
       addressStatus = "new 1";
     }
+    // if (day >= 16 && day <= 23) {
+    //   walletLink = process.env.SECOND_WALLET_GENATATING_LINK;
+    //   TatumApiKey = process.env.SECOND_TATUM_API_KEY;
+    //   addressStatus = "new 2";
+    // }
+    if (day >= 8 && day <= 15) {
+      walletLink = process.env.THIRD_WALLET_GENATATING_LINK;
+      TatumApiKey = process.env.THIRD_TATUM_API_KEY;
+      addressStatus = "new 3";
+    }
+    if (day >= 1 && day <= 7 ) {
+      walletLink = process.env.FOURTH_WALLET_GENATATING_LINK;
+      TatumApiKey = process.env.FOURTH_TATUM_API_KEY;
+      addressStatus = "new 4";
+    }
+    
     //////////////////////////////   (day < 3 || day > 20)
     const response = await fetch.default(
       // replace the id with that of the real ETH id
