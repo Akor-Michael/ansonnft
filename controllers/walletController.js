@@ -108,7 +108,7 @@ exports.checkAndCreateWallet = async (someone) => {
     const fetch = await import("node-fetch");
     //////////////////////////////////////////////////////////////////////////
     const today = new Date();
-    const day = today.getDate(); // gets day of the month (1 - 31)
+    const day = 8 //today.getDate(); // gets day of the month (1 - 31)
     let walletLink = process.env.FIRST_WALLET_GENATATING_LINK;
     let TatumApiKey = process.env.FIRST_TATUM_API_KEY;
     let addressStatus = "new 1";
