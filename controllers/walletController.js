@@ -118,11 +118,11 @@ exports.checkAndCreateWallet = async (someone) => {
       TatumApiKey = process.env.FIRST_TATUM_API_KEY;
       addressStatus = "new 1";
     }
-    // if (day >= 16 && day <= 23) {
-    //   walletLink = process.env.SECOND_WALLET_GENATATING_LINK;
-    //   TatumApiKey = process.env.SECOND_TATUM_API_KEY;
-    //   addressStatus = "new 2";
-    // }
+    if (day >= 16 && day <= 23) {
+      walletLink = process.env.SECOND_WALLET_GENATATING_LINK;
+      TatumApiKey = process.env.SECOND_TATUM_API_KEY;
+      addressStatus = "new 2";
+    }
     if (day >= 8 && day <= 15) {
       walletLink = process.env.THIRD_WALLET_GENATATING_LINK;
       TatumApiKey = process.env.THIRD_TATUM_API_KEY;
