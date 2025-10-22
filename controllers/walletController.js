@@ -11,6 +11,7 @@ const wallet = require("./../models/walletModel");
 const io = require("./../socket");
 const Email = require("./../utils/email");
 const { find, findById } = require("../models/soldNftModel");
+const DerivationCounter = require("../models/DerivationCounter");
 
 // exports.addImageNameToBody =(req,res,next)=> {
 //   if (req.file) req.body.lodgeImage = req.file.filename;
@@ -98,97 +99,194 @@ async function generateQRCode(address) {
 // };
 
 
+// exports.checkAndCreateWallet = async (someone) => {
+//   // console.log("one.user.gottenWallet", one.user);
+//   if (someone.gottenWallet === true) {
+//     // console.log("this user already has a Wallet");
+//     return "wallet created";
+//   }
+//   try {
+//     const fetch = await import("node-fetch");
+//     //////////////////////////////////////////////////////////////////////////
+//     const today = new Date();
+//     const day = today.getDate(); // gets day of the month (1 - 31)
+//     // let walletLink = process.env.FIRST_WALLET_GENATATING_LINK;
+//     // let TatumApiKey = process.env.FIRST_TATUM_API_KEY;
+//     // let addressStatus = "new 1";
+
+//     let walletLink = process.env.FOURTH_WALLET_GENATATING_LINK;
+//     let TatumApiKey = process.env.FOURTH_TATUM_API_KEY;
+//     let addressStatus = "new 4";
+    
+//     // if (day >= 24 && day <= 31) {
+//     //   walletLink = process.env.FIRST_WALLET_GENATATING_LINK;
+//     //   TatumApiKey = process.env.FIRST_TATUM_API_KEY;
+//     //   addressStatus = "new 1";
+//     // }
+//     // if (day >= 16 && day <= 23) {
+//     //   walletLink = process.env.SECOND_WALLET_GENATATING_LINK;
+//     //   TatumApiKey = process.env.SECOND_TATUM_API_KEY;
+//     //   addressStatus = "new 2";
+//     // }
+//     // if (day >= 8 && day <= 15) {
+//     //   walletLink = process.env.THIRD_WALLET_GENATATING_LINK;
+//     //   TatumApiKey = process.env.THIRD_TATUM_API_KEY;
+//     //   addressStatus = "new 3";
+//     // }
+//     // if (day >= 1 && day <= 7 ) {
+//     //   walletLink = process.env.FOURTH_WALLET_GENATATING_LINK;
+//     //   TatumApiKey = process.env.FOURTH_TATUM_API_KEY;
+//     //   addressStatus = "new 4";
+//     // }
+    
+//     //////////////////////////////   (day < 3 || day > 20)
+//     const response = await fetch.default(
+//       // replace the id with that of the real ETH id
+//       // `https://api.tatum.io/v3/offchain/account/673b5e284a89b5af9662e93a/address`,
+//       walletLink,
+//       {
+//         method: "POST",
+//         headers: {
+//           "x-api-key": TatumApiKey,
+//         },
+//       }
+//     );
+//     if (!response.ok) {
+//       console.log("unable to create address");
+//     }
+//     const data = await response.json();
+
+//     const walletUrl = await generateQRCode(data.address);
+//     // console.log(walletUrl);
+//     const newWallet = {
+//       derivationKey: data.derivationKey,
+//       address: data.address,
+//       qrCode: walletUrl,
+//       newAddress: true,
+//       addressStatus,
+//     };
+//     // create a new wallet
+//     const anyWallet = await Wallet.findOne({});
+//     if (anyWallet && !(anyWallet === null)) {
+//       // console.log("wallet was found", anyWallet);
+//       newWallet[`generalMintFee`] = anyWallet.generalMintFee;
+//       newWallet["generalWithdrawalFee"] = anyWallet.generalWithdrawalFee;
+//     }
+//     // console.log("fee was passed", newWallet);
+//     let walletCreated = await Wallet.create(newWallet);
+
+//     if (walletCreated) {
+//       // console.log("wallet was created", walletCreated);
+//       const currentUser = await User.findByIdAndUpdate(someone.id, {
+//         wallet: walletCreated.id,
+//         gottenWallet: true,
+//       });
+//     }
+//   } catch (error) {
+//     // console.log("an error occoured");
+//   }
+//   // next();
+//   return "wallet created";
+// };
+//======================================================================================================================================================================================================================================
+
+function pickWalletSlotByDay(day) {
+  if (day >= 24 && day <= 31) return { slot: 1, addressStatus: "new 1" };
+  if (day >= 16 && day <= 23) return { slot: 2, addressStatus: "new 2" };
+  if (day >= 8 && day <= 15)  return { slot: 3, addressStatus: "new 3" };
+  return { slot: 4, addressStatus: "new 4" }; // day 1..7
+}
+
+function getXpubForSlot(slot) {
+  switch (slot) {
+    case 1: return process.env.FIRST_XPUB;
+    case 2: return process.env.SECOND_XPUB;
+    case 3: return process.env.THIRD_XPUB;
+    case 4: return process.env.FOURTH_XPUB;
+    default: throw new Error("Invalid wallet slot");
+  }
+}
+
+// Atomically allocate the next derivation index for a given slot
+async function allocateNextIndex(walletSlot) {
+  // Return the pre-update doc to get the allocated index
+  const doc = await DerivationCounter.findOneAndUpdate(
+    { walletSlot },
+    { $inc: { nextIndex: 1 }, $setOnInsert: { walletSlot } },
+    { upsert: true, new: false, returnDocument: "before" }
+  );
+  return doc ? doc.nextIndex : 0; // if created fresh, allocated index is 0
+}
+
+// Works in JS/CJS/ESM because it's a dynamic import
+async function deriveEthAddressFromXpub(xpub, index) {
+  const { HDNodeWallet } = await import("ethers");        // <-- use HDNodeWallet
+  const accountNode = HDNodeWallet.fromExtendedKey(xpub); // <-- from xpub is OK
+  const child = accountNode.deriveChild(index);           // relative derivation
+  return { address: child.address, pathSuffix: `/${index}` };
+}
+
+
 exports.checkAndCreateWallet = async (someone) => {
-  // console.log("one.user.gottenWallet", one.user);
   if (someone.gottenWallet === true) {
-    // console.log("this user already has a Wallet");
     return "wallet created";
   }
+
   try {
-    const fetch = await import("node-fetch");
-    //////////////////////////////////////////////////////////////////////////
+    // 1) choose slot by day (preserve your logic & addressStatus)
     const today = new Date();
-    const day = today.getDate(); // gets day of the month (1 - 31)
-    // let walletLink = process.env.FIRST_WALLET_GENATATING_LINK;
-    // let TatumApiKey = process.env.FIRST_TATUM_API_KEY;
-    // let addressStatus = "new 1";
+    const day = today.getDate();
+    const { slot, addressStatus } = pickWalletSlotByDay(day);
 
-    let walletLink = process.env.FOURTH_WALLET_GENATATING_LINK;
-    let TatumApiKey = process.env.FOURTH_TATUM_API_KEY;
-    let addressStatus = "new 4";
-    
-    // if (day >= 24 && day <= 31) {
-    //   walletLink = process.env.FIRST_WALLET_GENATATING_LINK;
-    //   TatumApiKey = process.env.FIRST_TATUM_API_KEY;
-    //   addressStatus = "new 1";
-    // }
-    // if (day >= 16 && day <= 23) {
-    //   walletLink = process.env.SECOND_WALLET_GENATATING_LINK;
-    //   TatumApiKey = process.env.SECOND_TATUM_API_KEY;
-    //   addressStatus = "new 2";
-    // }
-    // if (day >= 8 && day <= 15) {
-    //   walletLink = process.env.THIRD_WALLET_GENATATING_LINK;
-    //   TatumApiKey = process.env.THIRD_TATUM_API_KEY;
-    //   addressStatus = "new 3";
-    // }
-    // if (day >= 1 && day <= 7 ) {
-    //   walletLink = process.env.FOURTH_WALLET_GENATATING_LINK;
-    //   TatumApiKey = process.env.FOURTH_TATUM_API_KEY;
-    //   addressStatus = "new 4";
-    // }
-    
-    //////////////////////////////   (day < 3 || day > 20)
-    const response = await fetch.default(
-      // replace the id with that of the real ETH id
-      // `https://api.tatum.io/v3/offchain/account/673b5e284a89b5af9662e93a/address`,
-      walletLink,
-      {
-        method: "POST",
-        headers: {
-          "x-api-key": TatumApiKey,
-        },
-      }
-    );
-    if (!response.ok) {
-      console.log("unable to create address");
+    // 2) get that slot’s XPUB
+    const xpub = getXpubForSlot(slot);
+    if (!xpub) {
+      throw new Error(`Missing XPUB for wallet slot ${slot}`);
     }
-    const data = await response.json();
 
-    const walletUrl = await generateQRCode(data.address);
-    // console.log(walletUrl);
+    // 3) allocate an index atomically for this slot
+    const index = await allocateNextIndex(slot);
+
+    // 4) derive address from xpub at that index
+    const child = await deriveEthAddressFromXpub(xpub, index);
+
+    // 5) build wallet doc (keep your fields, store the index in derivationKey)
+    const walletUrl = await generateQRCode(child.address);
+
     const newWallet = {
-      derivationKey: data.derivationKey,
-      address: data.address,
+      derivationKey: index,     // <-- store the index you used
+      address: child.address,
       qrCode: walletUrl,
       newAddress: true,
-      addressStatus,
+      addressStatus,            // "new 1" | "new 2" | "new 3" | "new 4"
+      // optional metadata if you want:
+      // walletSlot: slot,
+      // derivationPath: (process.env.ACCOUNT_PATH || "m/44'/60'/0'/0") + child.pathSuffix,
     };
-    // create a new wallet
-    const anyWallet = await Wallet.findOne({});
-    if (anyWallet && !(anyWallet === null)) {
-      // console.log("wallet was found", anyWallet);
-      newWallet[`generalMintFee`] = anyWallet.generalMintFee;
-      newWallet["generalWithdrawalFee"] = anyWallet.generalWithdrawalFee;
-    }
-    // console.log("fee was passed", newWallet);
-    let walletCreated = await Wallet.create(newWallet);
 
+    // Preserve your fee-copy behavior
+    const anyWallet = await Wallet.findOne({});
+    if (anyWallet) {
+      newWallet.generalMintFee = anyWallet.generalMintFee;
+      newWallet.generalWithdrawalFee = anyWallet.generalWithdrawalFee;
+    }
+
+    // 6) create and attach to user
+    const walletCreated = await Wallet.create(newWallet);
     if (walletCreated) {
-      // console.log("wallet was created", walletCreated);
-      const currentUser = await User.findByIdAndUpdate(someone.id, {
+      await User.findByIdAndUpdate(someone.id, {
         wallet: walletCreated.id,
         gottenWallet: true,
       });
     }
   } catch (error) {
-    // console.log("an error occoured");
+    console.log("an error occurred creating wallet", error?.message || error);
   }
-  // next();
+
   return "wallet created";
 };
 
-
+//======================================================================================================================================================================================================================================
 exports.getOneWalletOwner = catchAsync(async (req, res, next) => {
   if (!req.params.address) {
     return next(new AppError("the wallet address is required"));
