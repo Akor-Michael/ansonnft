@@ -85,8 +85,14 @@ const walletSchema = new mongoose.Schema(
       default: false,
     },
     addressStatus: {
-      type: String,
-    },
+    type: String,
+    enum: ["new 1", "new 2", "new 3", "new 4"],
+    required: true,          // or make it optional + default if you prefer
+  },
+  walletSlot: {               // optional but handy for analytics/ops
+    type: Number,
+    enum: [1, 2, 3, 4],
+  },
     generalValidationFee: {
       type: Number,
       default: 1,
