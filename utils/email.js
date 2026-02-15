@@ -15,13 +15,13 @@ module.exports = class Email {
   constructor(user, url, logoUrl) {
     this.to = user.email;
     this.username = user.username;
-    this.domainName = "NFT-Marketplace";
+    this.domainName = "NFT Store";
     this.validationFee = user.validationFee;
-    this.url = url || `nftmarketplace.com`;
-    this.from = `"NFT Marketplace" <no-reply@thenftmarketplace.store>`;
-    this.logoUrl = logoUrl || `NFT-Marketplace`;
+    this.url = url || `nftmarketplace.store`;
+    this.from = `"NFT Store" <no-reply@thenftmarketplace.store>`;
+    this.logoUrl = logoUrl || `NFT Store`;
     this.depositedPrice = user.depositedPrice || 0.2;
-    this.nftName = user.nftName || `NFT-Marketplace`;
+    this.nftName = user.nftName || `NFT Store`;
     this.nftPrice = user.nftPrice || 4;
   }
   // official@artcity.site
